@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="BloodDonate - Find blood donors near you. Search by blood group, district, city, and availability."
+    />
+    <meta
+      name="keywords"
+      content="find blood donor, blood donor search, blood donor directory"
+    />
+    <meta name="author" content="BloodDonate" />
+
+    <title>Find Donors - BloodLink</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind Configuration -->
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                50: "#fef2f2",
+                100: "#fee2e2",
+                200: "#fecaca",
+                300: "#fca5a5",
+                400: "#f87171",
+                500: "#ef4444",
+                600: "#dc2626",
+                700: "#b91c1c",
+                800: "#991b1b",
+                900: "#7f1d1d",
+              },
+            },
+            animation: {
+              "fade-in": "fadeIn 0.5s ease-in-out",
+              "slide-up": "slideUp 0.5s ease-out",
+              "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+              "spin-slow": "spin 2s linear infinite",
+            },
+            keyframes: {
+              fadeIn: {
+                "0%": { opacity: "0" },
+                "100%": { opacity: "1" },
+              },
+              slideUp: {
+                "0%": { transform: "translateY(20px)", opacity: "0" },
+                "100%": { transform: "translateY(0)", opacity: "1" },
+              },
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      #loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        transition: opacity 0.5s ease-out;
+      }
+
+      .dark #loading-screen {
+        background: #1f2937;
+      }
+
+      #loading-screen.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #fecaca;
+        border-top: 4px solid #dc2626;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 16px 24px;
+        background: #10b981;
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transform: translateX(120%);
+        transition: transform 0.3s ease-in-out;
+        z-index: 10000;
+      }
+
+      .toast.show {
+        transform: translateX(0);
+      }
+
+      .toast.error {
+        background: #ef4444;
+      }
+
+      ::-webkit-scrollbar {
+        width: 10px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: #dc2626;
+        border-radius: 5px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: #b91c1c;
+      }
+
+      /* Donor card hover effect */
+      .donor-card {
+        transition: all 0.3s ease;
+      }
+
+      .donor-card:hover {
+        transform: translateY(-5px);
+      }
+
+      /* Filter active state */
+      .filter-active {
+        background-color: #dc2626 !important;
+        color: white !important;
+      }
+
+      /* Blood group badge */
+      .blood-badge {
+        background: linear-gradient(135deg, #dc2626, #ef4444);
+        color: white;
+        font-weight: bold;
+      }
+
+      /* Skeleton loading */
+      .skeleton {
+        background: linear-gradient(
+          90deg,
+          #e5e7eb 25%,
+          #f3f4f6 50%,
+          #e5e7eb 75%
+        );
+        background-size: 200% 100%;
+        animation: skeleton-loading 1.5s infinite;
+      }
+
+      .dark .skeleton {
+        background: linear-gradient(
+          90deg,
+          #374151 25%,
+          #4b5563 50%,
+          #374151 75%
+        );
+        background-size: 200% 100%;
+      }
+
+      @keyframes skeleton-loading {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+
+      /* Modal styles */
+      .modal-overlay {
+        animation: fadeIn 0.3s ease-out;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+      <div class="text-center">
+        <div class="spinner mx-auto mb-4"></div>
+        <p class="text-primary-600 dark:text-primary-400 font-semibold">
+          Loading...
+        </p>
+      </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Donor Detail Modal -->
+    <div
+      id="donor-modal"
+      class="modal-overlay fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center hidden"
+    >
+      <div
+        class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden"
+      >
+        <div
+          class="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4 flex justify-between items-center"
+        >
+          <h3 class="text-xl font-bold text-white">Donor Details</h3>
+          <button
+            id="close-modal"
+            class="text-white hover:text-red-200 transition-colors"
+          >
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              ></path>
+            </svg>
+          </button>
+        </div>
+        <div id="modal-content" class="p-6">
+          <!-- Content loaded dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav
+      class="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-lg transition-all duration-300"
+    >
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <!-- Logo -->
+          <a href="index.html" class="flex items-center space-x-2">
+            <svg
+              class="w-8 h-8 text-primary-600"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"
+              />
+            </svg>
+            <div class="flex flex-col">
+              <span
+                class="text-2xl font-bold text-primary-600 dark:text-primary-400"
+                >BloodLink</span
+              >
+              <span
+                class="text-xs font-medium text-gray-500 dark:text-gray-400 -mt-1"
+                >Connecting Donors, Saving Lives.</span
+              >
+            </div>
+          </a>
+
+          <!-- Desktop Menu -->
+          <div class="hidden md:flex items-center space-x-6">
+            <a
+              href="index.html"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium"
+              >Home</a
+            >
+            <a
+              href="about.html"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium"
+              >About</a
+            >
+            <a
+              href="donor.html"
+              class="text-primary-600 dark:text-primary-400 font-medium"
+              aria-current="page"
+              >Donors</a
+            >
+            <a
+              href="request.html"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium"
+              >Request Blood</a
+            >
+            <a
+              href="contact.html"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium"
+              >Contact</a
+            >
+            <a
+              href="login.html"
+              class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-full transition-all duration-300 transform hover:scale-105 font-medium"
+              >Login</a
+            >
+            <a
+              href="register.html"
+              class="border-2 border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white px-6 py-2 rounded-full transition-all duration-300 font-medium"
+              >Register</a
+            >
+
+            <!-- Dark Mode Toggle -->
+            <button
+              id="dark-mode-toggle"
+              aria-label="Toggle dark mode"
+              class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
+              <svg
+                id="sun-icon"
+                class="w-5 h-5 text-gray-700 dark:text-gray-300 hidden"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                ></path>
+              </svg>
+              <svg
+                id="moon-icon"
+                class="w-5 h-5 text-gray-700 dark:text-gray-300"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                ></path>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Mobile Menu Button -->
+          <button
+            id="mobile-menu-button"
+            aria-label="Open menu"
+            aria-expanded="false"
+            class="md:hidden p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          >
+            <svg
+              class="w-6 h-6 text-gray-700 dark:text-gray-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 6h16M4 12h16M4 18h16"
+              ></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="md:hidden hidden pb-4">
+          <div class="flex flex-col space-y-3">
+            <a
+              href="index.html"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >Home</a
+            >
+            <a
+              href="about.html"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >About</a
+            >
+            <a
+              href="donor.html"
+              class="text-primary-600 dark:text-primary-400 font-medium px-4 py-2 rounded-lg bg-red-50 dark:bg-gray-800"
+              >Donors</a
+            >
+            <a
+              href="request.html"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >Request Blood</a
+            >
+            <a
+              href="contact.html"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >Contact</a
+            >
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-3">
+              <a
+                href="login.html"
+                class="text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg block hover:bg-gray-100 dark:hover:bg-gray-800"
+                >Login</a
+              >
+              <a
+                href="register.html"
+                class="bg-primary-600 text-white px-4 py-2 rounded-lg text-center block mt-2"
+                >Register</a
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow py-8">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Page Header -->
+        <div class="text-center mb-10">
+          <h1
+            class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-3"
+          >
+            Find Blood
+            <span class="text-primary-600 dark:text-primary-400">Donors</span>
+          </h1>
+          <p class="text-lg text-gray-600 dark:text-gray-400">
+            Search for compatible blood donors in your area
+          </p>
+        </div>
+
+        <!-- Search & Filter Section -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-8">
+          <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <!-- Search Input -->
+            <div class="lg:col-span-2">
+              <label
+                for="search-input"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                Search Donor
+              </label>
+              <div class="relative">
+                <svg
+                  class="absolute left-3 top-3 w-5 h-5 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  ></path>
+                </svg>
+                <input
+                  type="text"
+                  id="search-input"
+                  placeholder="Search by name or location..."
+                  class="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <!-- Blood Group Filter -->
+            <div>
+              <label
+                for="blood-filter"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                Blood Group
+              </label>
+              <select
+                id="blood-filter"
+                class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value="">All Groups</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+              </select>
+            </div>
+
+            <!-- District Filter -->
+            <div>
+              <label
+                for="district-filter"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                District
+              </label>
+              <select
+                id="district-filter"
+                class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value="">All Districts</option>
+              </select>
+            </div>
+
+            <!-- Availability Filter -->
+            <div>
+              <label
+                for="availability-filter"
+                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                Availability
+              </label>
+              <select
+                id="availability-filter"
+                class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value="">All</option>
+                <option value="available">Available</option>
+                <option value="unavailable">Unavailable</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Active Filters & Reset -->
+          <div
+            class="flex items-center justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-700"
+          >
+            <div id="active-filters" class="flex flex-wrap gap-2">
+              <!-- Active filter badges will appear here -->
+            </div>
+            <button
+              id="reset-filters"
+              class="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center space-x-1"
+            >
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                ></path>
+              </svg>
+              <span>Reset Filters</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Results Count -->
+        <div class="flex justify-between items-center mb-6">
+          <p class="text-gray-600 dark:text-gray-400">
+            Showing
+            <span
+              id="results-count"
+              class="font-semibold text-gray-900 dark:text-white"
+              >0</span
+            >
+            donors
+          </p>
+          <div class="flex items-center space-x-2">
+            <span class="text-sm text-gray-500 dark:text-gray-400"
+              >Sort by:</span
+            >
+            <select
+              id="sort-by"
+              class="text-sm px-3 py-1 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            >
+              <option value="name">Name</option>
+              <option value="bloodGroup">Blood Group</option>
+              <option value="totalDonations">Most Donations</option>
+              <option value="lastDonation">Recent Donation</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div
+          id="loading-state"
+          class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8"
+        >
+          <!-- Skeleton cards shown while loading -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl p-6">
+            <div class="flex items-center space-x-4 mb-4">
+              <div class="w-14 h-14 skeleton rounded-full"></div>
+              <div class="flex-1">
+                <div class="h-4 skeleton rounded w-3/4 mb-2"></div>
+                <div class="h-3 skeleton rounded w-1/2"></div>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <div class="h-3 skeleton rounded w-full"></div>
+              <div class="h-3 skeleton rounded w-2/3"></div>
+            </div>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-xl p-6">
+            <div class="flex items-center space-x-4 mb-4">
+              <div class="w-14 h-14 skeleton rounded-full"></div>
+              <div class="flex-1">
+                <div class="h-4 skeleton rounded w-3/4 mb-2"></div>
+                <div class="h-3 skeleton rounded w-1/2"></div>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <div class="h-3 skeleton rounded w-full"></div>
+              <div class="h-3 skeleton rounded w-2/3"></div>
+            </div>
+          </div>
+          <div class="bg-white dark:bg-gray-800 rounded-xl p-6">
+            <div class="flex items-center space-x-4 mb-4">
+              <div class="w-14 h-14 skeleton rounded-full"></div>
+              <div class="flex-1">
+                <div class="h-4 skeleton rounded w-3/4 mb-2"></div>
+                <div class="h-3 skeleton rounded w-1/2"></div>
+              </div>
+            </div>
+            <div class="space-y-2">
+              <div class="h-3 skeleton rounded w-full"></div>
+              <div class="h-3 skeleton rounded w-2/3"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Donors Grid -->
+        <div
+          id="donors-grid"
+          class="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8"
+        >
+          <!-- Donor cards will be rendered here -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="text-center py-16 hidden">
+          <svg
+            class="w-24 h-24 text-gray-300 dark:text-gray-600 mx-auto mb-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+            ></path>
+          </svg>
+          <h3
+            class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2"
+          >
+            No Donors Found
+          </h3>
+          <p class="text-gray-500 dark:text-gray-400">
+            Try adjusting your search or filters to find more donors.
+          </p>
+          <button
+            id="clear-filters-btn"
+            class="mt-4 bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+          >
+            Clear All Filters
+          </button>
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination" class="flex justify-center items-center space-x-2">
+          <!-- Pagination buttons will be rendered here -->
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-8 mt-auto">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <p class="text-gray-400 text-sm">
+          © 2024 BloodDonate. All rights reserved. Made with ❤️ for humanity.
+        </p>
+      </div>
+    </footer>
+
+    <!-- JavaScript Files -->
+    <script src="js/darkmode.js"></script>
+    <script src="js/donor.js"></script>
+  </body>
+</html>
