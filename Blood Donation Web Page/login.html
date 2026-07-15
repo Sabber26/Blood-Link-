@@ -1,585 +1,689 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" class="scroll-smooth">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="BloodDonate - Login to your account and manage your blood donations">
-    <meta name="keywords" content="blood donation login, donor login, blood bank login">
-    <meta name="author" content="BloodDonate">
-    
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="BloodDonate - Login to your account and manage your blood donations"
+    />
+    <meta
+      name="keywords"
+      content="blood donation login, donor login, blood bank login"
+    />
+    <meta name="author" content="BloodDonate" />
+
     <title>Login - BloodLink</title>
-    
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Tailwind Configuration -->
     <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#fef2f2',
-                            100: '#fee2e2',
-                            200: '#fecaca',
-                            300: '#fca5a5',
-                            400: '#f87171',
-                            500: '#ef4444',
-                            600: '#dc2626',
-                            700: '#b91c1c',
-                            800: '#991b1b',
-                            900: '#7f1d1d',
-                        }
-                    },
-                    animation: {
-                        'fade-in': 'fadeIn 0.5s ease-in-out',
-                        'slide-up': 'slideUp 0.5s ease-out',
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                    },
-                    keyframes: {
-                        fadeIn: {
-                            '0%': { opacity: '0' },
-                            '100%': { opacity: '1' },
-                        },
-                        slideUp: {
-                            '0%': { transform: 'translateY(20px)', opacity: '0' },
-                            '100%': { transform: 'translateY(0)', opacity: '1' },
-                        }
-                    }
-                }
-            }
-        }
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                50: "#fef2f2",
+                100: "#fee2e2",
+                200: "#fecaca",
+                300: "#fca5a5",
+                400: "#f87171",
+                500: "#ef4444",
+                600: "#dc2626",
+                700: "#b91c1c",
+                800: "#991b1b",
+                900: "#7f1d1d",
+              },
+            },
+            animation: {
+              "fade-in": "fadeIn 0.5s ease-in-out",
+              "slide-up": "slideUp 0.5s ease-out",
+              "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+            },
+            keyframes: {
+              fadeIn: {
+                "0%": { opacity: "0" },
+                "100%": { opacity: "1" },
+              },
+              slideUp: {
+                "0%": { transform: "translateY(20px)", opacity: "0" },
+                "100%": { transform: "translateY(0)", opacity: "1" },
+              },
+            },
+          },
+        },
+      };
     </script>
-    
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Loading Animation */
+      #loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        transition: opacity 0.5s ease-out;
+      }
+
+      .dark #loading-screen {
+        background: #1f2937;
+      }
+
+      #loading-screen.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #fecaca;
+        border-top: 4px solid #dc2626;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
         }
-        
-        body {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+        100% {
+          transform: rotate(360deg);
         }
-        
-        /* Loading Animation */
-        #loading-screen {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            transition: opacity 0.5s ease-out;
+      }
+
+      /* Toast Notification */
+      .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 16px 24px;
+        background: #10b981;
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        transform: translateX(120%);
+        transition: transform 0.3s ease-in-out;
+        z-index: 10000;
+      }
+
+      .toast.show {
+        transform: translateX(0);
+      }
+
+      .toast.error {
+        background: #ef4444;
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 10px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: #dc2626;
+        border-radius: 5px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: #b91c1c;
+      }
+
+      /* Input focus styles */
+      input:focus {
+        outline: none;
+      }
+
+      /* Password toggle button */
+      .password-toggle {
+        cursor: pointer;
+        transition: color 0.2s;
+      }
+
+      .password-toggle:hover {
+        color: #dc2626;
+      }
+
+      /* Animation for form */
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
         }
-        
-        .dark #loading-screen {
-            background: #1f2937;
+        10%,
+        30%,
+        50%,
+        70%,
+        90% {
+          transform: translateX(-5px);
         }
-        
-        #loading-screen.hidden {
-            opacity: 0;
-            pointer-events: none;
+        20%,
+        40%,
+        60%,
+        80% {
+          transform: translateX(5px);
         }
-        
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid #fecaca;
-            border-top: 4px solid #dc2626;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* Toast Notification */
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 16px 24px;
-            background: #10b981;
-            color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            transform: translateX(120%);
-            transition: transform 0.3s ease-in-out;
-            z-index: 10000;
-        }
-        
-        .toast.show {
-            transform: translateX(0);
-        }
-        
-        .toast.error {
-            background: #ef4444;
-        }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 10px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #dc2626;
-            border-radius: 5px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: #b91c1c;
-        }
-        
-        /* Input focus styles */
-        input:focus {
-            outline: none;
-        }
-        
-        /* Password toggle button */
-        .password-toggle {
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-        
-        .password-toggle:hover {
-            color: #dc2626;
-        }
-        
-        /* Animation for form */
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-            20%, 40%, 60%, 80% { transform: translateX(5px); }
-        }
-        
-        .shake {
-            animation: shake 0.6s ease-in-out;
-        }
+      }
+
+      .shake {
+        animation: shake 0.6s ease-in-out;
+      }
     </style>
-</head>
-<body class="bg-gradient-to-br from-red-50 to-white dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
-    
+  </head>
+  <body
+    class="bg-gradient-to-br from-red-50 to-white dark:from-gray-900 dark:to-gray-800 transition-colors duration-300"
+  >
     <!-- Loading Screen -->
     <div id="loading-screen">
-        <div class="text-center">
-            <div class="spinner mx-auto mb-4"></div>
-            <p class="text-primary-600 dark:text-primary-400 font-semibold">Loading...</p>
-        </div>
+      <div class="text-center">
+        <div class="spinner mx-auto mb-4"></div>
+        <p class="text-primary-600 dark:text-primary-400 font-semibold">
+          Loading...
+        </p>
+      </div>
     </div>
-    
+
     <!-- Toast Notification Container -->
     <div id="toast" class="toast"></div>
-    
+
     <!-- Navigation -->
-    <nav class="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-lg transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
-                <!-- Logo -->
-                <a href="index.html" class="flex items-center space-x-2">
-                    <svg class="w-8 h-8 text-primary-600" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-                    </svg>
-                    <div class="flex flex-col">
-                        <span class="text-2xl font-bold text-primary-600 dark:text-primary-400">BloodLink</span>
-                        <span class="text-xs font-medium text-gray-500 dark:text-gray-400 -mt-1">Connecting Donors, Saving Lives.</span>
-                    </div>
-                </a>
-                
-                <!-- Desktop Menu -->
-                <div class="hidden md:flex items-center space-x-8">
-                    <a href="index.html" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium">Home</a>
-                    <a href="about.html" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium">About</a>
-                    <a href="donor.html" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium">Donors</a>
-                    <a href="request.html" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium">Request Blood</a>
-                    <a href="contact.html" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium">Contact</a>
-                    <a href="login.html" class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-full transition-all duration-300 transform hover:scale-105 font-medium" aria-current="page">Login</a>
-                    <a href="register.html" class="border-2 border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white px-6 py-2 rounded-full transition-all duration-300 font-medium">Register</a>
-                    
-                    <!-- Dark Mode Toggle -->
-                    <button id="dark-mode-toggle" aria-label="Toggle dark mode" 
-                            class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                        <svg id="sun-icon" class="w-5 h-5 text-gray-700 dark:text-gray-300 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
-                        </svg>
-                        <svg id="moon-icon" class="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-                        </svg>
-                    </button>
-                </div>
-                
-                <!-- Mobile Menu Button -->
-                <button id="mobile-menu-button" aria-label="Open menu" aria-expanded="false"
-                        class="md:hidden p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                    <svg class="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-                    </svg>
-                </button>
+    <nav
+      class="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-lg transition-all duration-300"
+    >
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <!-- Logo -->
+          <a href="index.html" class="flex items-center space-x-2">
+            <svg
+              class="w-8 h-8 text-primary-600"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"
+              />
+            </svg>
+            <div class="flex flex-col">
+              <span
+                class="text-2xl font-bold text-primary-600 dark:text-primary-400"
+                >BloodLink</span
+              >
+              <span
+                class="text-xs font-medium text-gray-500 dark:text-gray-400 -mt-1"
+                >Connecting Donors, Saving Lives.</span
+              >
             </div>
-            
-            <!-- Mobile Menu -->
-            <div id="mobile-menu" class="md:hidden hidden pb-4">
-                <div class="flex flex-col space-y-3">
-                    <a href="index.html" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">Home</a>
-                    <a href="about.html" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">About</a>
-                    <a href="donor.html" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">Donors</a>
-                    <a href="request.html" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">Request Blood</a>
-                    <a href="contact.html" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">Contact</a>
-                    <a href="login.html" class="bg-primary-600 text-white px-4 py-2 rounded-lg text-center">Login</a>
-                    <a href="register.html" class="border-2 border-primary-600 text-primary-600 px-4 py-2 rounded-lg text-center">Register</a>
-                </div>
-            </div>
+          </a>
+
+          <!-- Desktop Menu -->
+          <div class="hidden md:flex items-center space-x-8">
+            <a
+              href="index.html"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium"
+              >Home</a
+            >
+            <a
+              href="about.html"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium"
+              >About</a
+            >
+            <a
+              href="donor.html"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium"
+              >Donors</a
+            >
+            <a
+              href="donate.html"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium"
+              >Donate</a
+            >
+            <a
+              href="request.html"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium"
+              >Request Blood</a
+            >
+            <a
+              href="contact.html"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium"
+              >Contact</a
+            >
+            <a
+              href="login.html"
+              class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-full transition-all duration-300 transform hover:scale-105 font-medium"
+              aria-current="page"
+              >Login</a
+            >
+            <a
+              href="register.html"
+              class="border-2 border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white px-6 py-2 rounded-full transition-all duration-300 font-medium"
+              >Register</a
+            >
+
+            <!-- Dark Mode Toggle -->
+            <button
+              id="dark-mode-toggle"
+              aria-label="Toggle dark mode"
+              class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            >
+              <svg
+                id="sun-icon"
+                class="w-5 h-5 text-gray-700 dark:text-gray-300 hidden"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                ></path>
+              </svg>
+              <svg
+                id="moon-icon"
+                class="w-5 h-5 text-gray-700 dark:text-gray-300"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                ></path>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Mobile Menu Button -->
+          <button
+            id="mobile-menu-button"
+            aria-label="Open menu"
+            aria-expanded="false"
+            class="md:hidden p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+          >
+            <svg
+              class="w-6 h-6 text-gray-700 dark:text-gray-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 6h16M4 12h16M4 18h16"
+              ></path>
+            </svg>
+          </button>
         </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="md:hidden hidden pb-4">
+          <div class="flex flex-col space-y-3">
+            <a
+              href="index.html"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >Home</a
+            >
+            <a
+              href="about.html"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >About</a
+            >
+            <a
+              href="donor.html"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >Donors</a
+            >
+            <a
+              href="donate.html"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >Donate</a
+            >
+            <a
+              href="request.html"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >Request Blood</a
+            >
+            <a
+              href="contact.html"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >Contact</a
+            >
+            <a
+              href="login.html"
+              class="bg-primary-600 text-white px-4 py-2 rounded-lg text-center"
+              >Login</a
+            >
+            <a
+              href="register.html"
+              class="border-2 border-primary-600 text-primary-600 px-4 py-2 rounded-lg text-center"
+              >Register</a
+            >
+          </div>
+        </div>
+      </div>
     </nav>
-    
+
     <!-- Main Content -->
-    <main class="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-md w-full">
-            <!-- Login Card -->
-            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden animate-slide-up">
-                <!-- Card Header -->
-                <div class="bg-gradient-to-r from-primary-600 to-primary-700 px-8 py-12 text-center">
-                    <div class="flex justify-center mb-6">
-                        <div class="w-20 h-20 bg-white rounded-full flex items-center justify-center">
-                            <svg class="w-12 h-12 text-primary-600" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <h2 class="text-3xl font-bold text-white mb-2">Welcome Back</h2>
-                    <p class="text-red-100">Login to your donor account</p>
-                </div>
-                
-                <!-- Login Form -->
-                <div class="px-8 py-8">
-                    <form id="login-form" data-validate class="space-y-6">
-                        <!-- Email Field -->
-                        <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Email Address
-                            </label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-                                    </svg>
-                                </div>
-                                <input 
-                                    type="email" 
-                                    id="email" 
-                                    name="email" 
-                                    required 
-                                    autocomplete="email"
-                                    placeholder="you@example.com"
-                                    class="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
-                                >
-                            </div>
-                        </div>
-                        
-                        <!-- Password Field -->
-                        <div>
-                            <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Password
-                            </label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                                    </svg>
-                                </div>
-                                <input 
-                                    type="password" 
-                                    id="password" 
-                                    name="password" 
-                                    required 
-                                    autocomplete="current-password"
-                                    placeholder="••••••••"
-                                    class="w-full pl-10 pr-12 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
-                                >
-                                <button 
-                                    type="button" 
-                                    id="toggle-password"
-                                    class="absolute inset-y-0 right-0 pr-3 flex items-center password-toggle"
-                                    aria-label="Toggle password visibility"
-                                >
-                                    <svg id="eye-icon" class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                    </svg>
-                                    <svg id="eye-off-icon" class="h-5 w-5 text-gray-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Remember Me & Forgot Password -->
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <input 
-                                    type="checkbox" 
-                                    id="remember-me" 
-                                    name="remember-me"
-                                    class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                                >
-                                <label for="remember-me" class="ml-2 block text-sm text-gray-700 dark:text-gray-300">
-                                    Remember me
-                                </label>
-                            </div>
-                            <button type="button" class="text-sm font-medium text-primary-600 hover:text-primary-500 transition-colors">
-                                Forgot password?
-                            </button>
-                        </div>
-                        
-                        <!-- Submit Button -->
-                        <button 
-                            type="submit" 
-                            class="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-lg font-semibold transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                        >
-                            Sign In
-                        </button>
-                        
-                        <!-- Divider -->
-                        <div class="relative my-6">
-                            <div class="absolute inset-0 flex items-center">
-                                <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
-                            </div>
-                            <div class="relative flex justify-center text-sm">
-                                <span class="px-4 bg-white dark:bg-gray-800 text-gray-500">Or continue with</span>
-                            </div>
-                        </div>
-                        
-                        <!-- Social Login Buttons -->
-                        <div class="grid grid-cols-2 gap-4">
-                            <button type="button" class="flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                                </svg>
-                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Facebook</span>
-                            </button>
-                            <button type="button" class="flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
-                                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                                </svg>
-                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Google</span>
-                            </button>
-                        </div>
-                    </form>
-                    
-                    <!-- Register Link -->
-                    <p class="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
-                        Don't have an account? 
-                        <a href="register.html" class="font-medium text-primary-600 hover:text-primary-500 transition-colors">
-                            Create one now
-                        </a>
-                    </p>
-                </div>
+    <main
+      class="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8"
+    >
+      <div class="max-w-md w-full">
+        <!-- Login Card -->
+        <div
+          class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl overflow-hidden animate-slide-up"
+        >
+          <!-- Card Header -->
+          <div
+            class="bg-gradient-to-r from-primary-600 to-primary-700 px-8 py-12 text-center"
+          >
+            <div class="flex justify-center mb-6">
+              <div
+                class="w-20 h-20 bg-white rounded-full flex items-center justify-center"
+              >
+                <svg
+                  class="w-12 h-12 text-primary-600"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"
+                  />
+                </svg>
+              </div>
             </div>
-            
-            <!-- Additional Info -->
-            <div class="mt-6 text-center">
-                <p class="text-xs text-gray-500 dark:text-gray-500">
-                    By signing in, you agree to our 
-                    <a href="#" class="text-primary-600 hover:text-primary-500">Terms of Service</a> 
-                    and 
-                    <a href="#" class="text-primary-600 hover:text-primary-500">Privacy Policy</a>
-                </p>
-            </div>
+            <h2 class="text-3xl font-bold text-white mb-2">Welcome Back</h2>
+            <p class="text-red-100">Login to your donor account</p>
+          </div>
+
+          <!-- Login Form -->
+          <div class="px-8 py-8">
+            <form id="login-form" data-validate class="space-y-6">
+              <!-- Email Field -->
+              <div>
+                <label
+                  for="email"
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Email Address
+                </label>
+                <div class="relative">
+                  <div
+                    class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                  >
+                    <svg
+                      class="h-5 w-5 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    required
+                    autocomplete="email"
+                    placeholder="you@example.com"
+                    class="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
+                  />
+                </div>
+              </div>
+
+              <!-- Password Field -->
+              <div>
+                <label
+                  for="password"
+                  class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                >
+                  Password
+                </label>
+                <div class="relative">
+                  <div
+                    class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"
+                  >
+                    <svg
+                      class="h-5 w-5 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                      />
+                    </svg>
+                  </div>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    required
+                    autocomplete="current-password"
+                    placeholder="••••••••"
+                    class="w-full pl-10 pr-12 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
+                  />
+                  <button
+                    type="button"
+                    id="toggle-password"
+                    class="absolute inset-y-0 right-0 pr-3 flex items-center password-toggle"
+                    aria-label="Toggle password visibility"
+                  >
+                    <svg
+                      id="eye-icon"
+                      class="h-5 w-5 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                      />
+                    </svg>
+                    <svg
+                      id="eye-off-icon"
+                      class="h-5 w-5 text-gray-400 hidden"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Remember Me & Forgot Password -->
+              <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="remember-me"
+                    name="remember-me"
+                    class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  />
+                  <label
+                    for="remember-me"
+                    class="ml-2 block text-sm text-gray-700 dark:text-gray-300"
+                  >
+                    Remember me
+                  </label>
+                </div>
+                <button
+                  type="button"
+                  class="text-sm font-medium text-primary-600 hover:text-primary-500 transition-colors"
+                >
+                  Forgot password?
+                </button>
+              </div>
+
+              <!-- Submit Button -->
+              <button
+                type="submit"
+                class="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-lg font-semibold transition-all duration-300 transform hover:scale-[1.02] shadow-lg hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              >
+                Sign In
+              </button>
+
+              <!-- Divider -->
+              <div class="relative my-6">
+                <div class="absolute inset-0 flex items-center">
+                  <div
+                    class="w-full border-t border-gray-300 dark:border-gray-600"
+                  ></div>
+                </div>
+                <div class="relative flex justify-center text-sm">
+                  <span class="px-4 bg-white dark:bg-gray-800 text-gray-500"
+                    >Or continue with</span
+                  >
+                </div>
+              </div>
+
+              <!-- Social Login Buttons -->
+              <div class="grid grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  class="flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <svg
+                    class="w-5 h-5 mr-2"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
+                    />
+                  </svg>
+                  <span
+                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >Facebook</span
+                  >
+                </button>
+                <button
+                  type="button"
+                  class="flex items-center justify-center px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <svg
+                    class="w-5 h-5 mr-2"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path
+                      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"
+                    />
+                    <path
+                      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+                    />
+                    <path
+                      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                    />
+                    <path
+                      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                    />
+                  </svg>
+                  <span
+                    class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                    >Google</span
+                  >
+                </button>
+              </div>
+            </form>
+
+            <!-- Register Link -->
+            <p
+              class="mt-8 text-center text-sm text-gray-600 dark:text-gray-400"
+            >
+              Don't have an account?
+              <a
+                href="register.html"
+                class="font-medium text-primary-600 hover:text-primary-500 transition-colors"
+              >
+                Create one now
+              </a>
+            </p>
+          </div>
         </div>
+
+        <!-- Additional Info -->
+        <div class="mt-6 text-center">
+          <p class="text-xs text-gray-500 dark:text-gray-500">
+            By signing in, you agree to our
+            <a href="#" class="text-primary-600 hover:text-primary-500"
+              >Terms of Service</a
+            >
+            and
+            <a href="#" class="text-primary-600 hover:text-primary-500"
+              >Privacy Policy</a
+            >
+          </p>
+        </div>
+      </div>
     </main>
-    
+
     <!-- Footer -->
     <footer class="bg-gray-900 text-white py-6">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <p class="text-gray-400 text-sm">© 2024 BloodDonate. All rights reserved. Made with ❤️ for humanity.</p>
-        </div>
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <p class="text-gray-400 text-sm">
+          © 2024 BloodDonate. All rights reserved. Made with ❤️ for humanity.
+        </p>
+      </div>
     </footer>
-    
+
     <!-- JavaScript Files -->
     <script src="js/darkmode.js"></script>
-    <script>
-        // Login Page Specific JavaScript
-        document.addEventListener('DOMContentLoaded', function() {
-            // Loading Screen
-            window.addEventListener('load', () => {
-                setTimeout(() => {
-                    const loadingScreen = document.getElementById('loading-screen');
-                    if (loadingScreen) {
-                        loadingScreen.classList.add('hidden');
-                    }
-                }, 500);
-            });
-            
-            // Initialize Dark Mode
-            if (typeof DarkMode !== 'undefined') {
-                DarkMode.init();
-            }
-            
-            // Mobile Menu Toggle
-            const menuButton = document.getElementById('mobile-menu-button');
-            const mobileMenu = document.getElementById('mobile-menu');
-            
-            if (menuButton && mobileMenu) {
-                menuButton.addEventListener('click', () => {
-                    const isExpanded = menuButton.getAttribute('aria-expanded') === 'true';
-                    menuButton.setAttribute('aria-expanded', !isExpanded);
-                    mobileMenu.classList.toggle('hidden');
-                });
-                
-                document.addEventListener('click', (e) => {
-                    if (!menuButton.contains(e.target) && !mobileMenu.contains(e.target)) {
-                        mobileMenu.classList.add('hidden');
-                        menuButton.setAttribute('aria-expanded', 'false');
-                    }
-                });
-            }
-            
-            // Password Visibility Toggle
-            const togglePassword = document.getElementById('toggle-password');
-            const passwordInput = document.getElementById('password');
-            const eyeIcon = document.getElementById('eye-icon');
-            const eyeOffIcon = document.getElementById('eye-off-icon');
-            
-            if (togglePassword && passwordInput) {
-                togglePassword.addEventListener('click', function() {
-                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-                    passwordInput.setAttribute('type', type);
-                    
-                    if (eyeIcon && eyeOffIcon) {
-                        eyeIcon.classList.toggle('hidden');
-                        eyeOffIcon.classList.toggle('hidden');
-                    }
-                });
-            }
-            
-            // Form Validation
-            const loginForm = document.getElementById('login-form');
-            
-            if (loginForm) {
-                loginForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    
-                    const email = document.getElementById('email').value.trim();
-                    const password = document.getElementById('password').value.trim();
-                    let isValid = true;
-                    
-                    // Clear previous errors
-                    clearErrors();
-                    
-                    // Email validation
-                    if (!email) {
-                        showError('email', 'Email is required');
-                        isValid = false;
-                    } else if (!isValidEmail(email)) {
-                        showError('email', 'Please enter a valid email address');
-                        isValid = false;
-                    }
-                    
-                    // Password validation
-                    if (!password) {
-                        showError('password', 'Password is required');
-                        isValid = false;
-                    } else if (password.length < 6) {
-                        showError('password', 'Password must be at least 6 characters');
-                        isValid = false;
-                    }
-                    
-                    if (isValid) {
-                        // Simulate login
-                        const submitButton = loginForm.querySelector('button[type="submit"]');
-                        const originalText = submitButton.textContent;
-                        submitButton.disabled = true;
-                        submitButton.textContent = 'Signing in...';
-                        
-                        setTimeout(() => {
-                            showToast('Login successful! Redirecting...', 'success');
-                            
-                            // Store login state
-                            const rememberMe = document.getElementById('remember-me').checked;
-                            if (rememberMe) {
-                                localStorage.setItem('userEmail', email);
-                            }
-                            localStorage.setItem('isLoggedIn', 'true');
-                            
-                            // Redirect to dashboard after 1.5 seconds
-                            setTimeout(() => {
-                                window.location.href = 'dashboard.html';
-                            }, 1500);
-                        }, 2000);
-                    } else {
-                        // Shake the form on error
-                        const card = document.querySelector('.bg-white');
-                        if (card) {
-                            card.classList.add('shake');
-                            setTimeout(() => {
-                                card.classList.remove('shake');
-                            }, 600);
-                        }
-                    }
-                });
-            }
-            
-            // Helper Functions
-            function showError(fieldId, message) {
-                const field = document.getElementById(fieldId);
-                if (!field) return;
-                
-                field.classList.add('border-red-500');
-                field.classList.remove('border-gray-300', 'dark:border-gray-600');
-                
-                const errorDiv = document.createElement('p');
-                errorDiv.className = 'text-red-500 text-xs mt-1 error-message';
-                errorDiv.textContent = message;
-                field.parentNode.appendChild(errorDiv);
-            }
-            
-            function clearErrors() {
-                document.querySelectorAll('.error-message').forEach(el => el.remove());
-                document.querySelectorAll('input').forEach(input => {
-                    input.classList.remove('border-red-500');
-                    input.classList.add('border-gray-300', 'dark:border-gray-600');
-                });
-            }
-            
-            function isValidEmail(email) {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                return emailRegex.test(email);
-            }
-            
-            function showToast(message, type = 'success') {
-                const toast = document.getElementById('toast');
-                if (!toast) return;
-                
-                toast.textContent = message;
-                toast.className = `toast ${type}`;
-                toast.classList.add('show');
-                
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                }, 3000);
-            }
-        });
-    </script>
-        <!-- JavaScript Files -->
-    <script src="js/darkmode.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/validation-utils.js"></script>
     <script src="js/login.js"></script>
-</body>
-</html>
-</body>
+  </body>
 </html>

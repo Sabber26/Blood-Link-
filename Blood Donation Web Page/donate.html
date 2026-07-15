@@ -1,0 +1,798 @@
+<!doctype html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="BloodDonate - Schedule blood donation appointments and find donation centers" />
+    <meta name="keywords" content="donate blood, blood donation appointment, blood donation center" />
+    <meta name="author" content="BloodDonate" />
+
+    <title>Donate Blood - BloodLink</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind Configuration -->
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: "#fef2f2",
+                            100: "#fee2e2",
+                            200: "#fecaca",
+                            300: "#fca5a5",
+                            400: "#f87171",
+                            500: "#ef4444",
+                            600: "#dc2626",
+                            700: "#b91c1c",
+                            800: "#991b1b",
+                            900: "#7f1d1d",
+                        },
+                    },
+                    animation: {
+                        "fade-in": "fadeIn 0.5s ease-in-out",
+                        "slide-up": "slideUp 0.5s ease-out",
+                        "pulse-slow": "pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                        "bounce-slow": "bounce 2s infinite",
+                        "float": "float 3s ease-in-out infinite",
+                        "slide-down": "slideDown 0.3s ease-out",
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            "0%": { opacity: "0" },
+                            "100%": { opacity: "1" },
+                        },
+                        slideUp: {
+                            "0%": { transform: "translateY(20px)", opacity: "0" },
+                            "100%": { transform: "translateY(0)", opacity: "1" },
+                        },
+                        slideDown: {
+                            "0%": { transform: "translateY(-10px)", opacity: "0" },
+                            "100%": { transform: "translateY(0)", opacity: "1" },
+                        },
+                        float: {
+                            "0%, 100%": { transform: "translateY(0px)" },
+                            "50%": { transform: "translateY(-10px)" },
+                        },
+                    },
+                },
+            },
+        };
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease-out;
+        }
+
+        .dark #loading-screen {
+            background: #1f2937;
+        }
+
+        #loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #fecaca;
+            border-top: 4px solid #dc2626;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 24px;
+            background: #10b981;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transform: translateX(120%);
+            transition: transform 0.3s ease-in-out;
+            z-index: 10000;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            background: #ef4444;
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #dc2626;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #b91c1c;
+        }
+
+        /* Step indicator */
+        .step-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .step-circle.active {
+            background: #dc2626;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .step-circle.completed {
+            background: #10b981;
+            color: white;
+        }
+
+        .step-circle.inactive {
+            background: #e5e7eb;
+            color: #9ca3af;
+        }
+
+        .step-line {
+            width: 60px;
+            height: 2px;
+            background: #e5e7eb;
+            transition: background 0.3s ease;
+        }
+
+        .step-line.active {
+            background: #dc2626;
+        }
+
+        /* Center card hover */
+        .center-card {
+            transition: all 0.3s ease;
+        }
+
+        .center-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        /* Eligibility checkbox */
+        .eligibility-item {
+            transition: all 0.2s ease;
+        }
+
+        .eligibility-item:hover {
+            background: #f3f4f6;
+        }
+
+        .dark .eligibility-item:hover {
+            background: #374151;
+        }
+
+        .eligibility-item.is-checked {
+            background: #f0fdf4;
+            box-shadow: inset 0 0 0 1px #86efac;
+        }
+
+        .dark .eligibility-item.is-checked {
+            background: rgba(20, 83, 45, 0.35);
+            box-shadow: inset 0 0 0 1px #15803d;
+        }
+
+        .eligibility-number::-webkit-outer-spin-button,
+        .eligibility-number::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .eligibility-number {
+            appearance: textfield;
+            -moz-appearance: textfield;
+        }
+
+        /* Calendar styles */
+        .calendar-day {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .calendar-day:hover {
+            background: #f3f4f6;
+        }
+
+        .dark .calendar-day:hover {
+            background: #374151;
+        }
+
+        .calendar-day.selected {
+            background: #dc2626;
+            color: white;
+        }
+
+        .calendar-day.unavailable {
+            color: #d1d5db;
+            cursor: not-allowed;
+        }
+
+        /* Time slot buttons */
+        .time-slot {
+            transition: all 0.2s ease;
+        }
+
+        .time-slot:hover {
+            background: #dc2626;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .time-slot.selected {
+            background: #dc2626;
+            color: white;
+        }
+
+        .time-slot.booked {
+            background: #e5e7eb;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .dark .time-slot.booked {
+            background: #374151;
+            color: #6b7280;
+        }
+
+        /* Eligibility badge */
+        .eligibility-badge {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* Progress bar animation */
+        .progress-bar {
+            transition: width 1s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="text-center">
+            <div class="spinner mx-auto mb-4"></div>
+            <p class="text-primary-600 dark:text-primary-400 font-semibold">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm shadow-lg transition-all duration-300" role="navigation" aria-label="Main navigation">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <a href="index.html" class="flex items-center space-x-2">
+                    <svg class="w-8 h-8 text-primary-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                    </svg>
+                    <div class="flex flex-col">
+                        <span class="text-2xl font-bold text-primary-600 dark:text-primary-400">BloodLink</span>
+                        <span class="text-xs font-medium text-gray-500 dark:text-gray-400 -mt-1">Connecting Donors, Saving Lives.</span>
+                    </div>
+                </a>
+
+                <!-- Desktop Menu -->
+                <div class="hidden md:flex items-center space-x-6">
+                    <a href="index.html" data-lang="nav_home" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium">Home</a>
+                    <a href="about.html" data-lang="nav_about" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium">About</a>
+                    <a href="donor.html" data-lang="nav_donors" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium">Donors</a>
+                    <a href="donate.html" data-lang="nav_donate" class="text-primary-600 dark:text-primary-400 font-medium" aria-current="page">Donate</a>
+                    <a href="request.html" data-lang="nav_request" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium">Request Blood</a>
+                    <a href="contact.html" data-lang="nav_contact" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium">Contact</a>
+
+                    <!-- Language Switcher -->
+                    <div class="relative">
+                        <button id="lang-toggle-btn" class="flex items-center space-x-1 px-2 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span id="current-lang-label" class="text-sm font-medium">EN</span>
+                        </button>
+                        <div id="lang-options" class="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg py-1 hidden z-50 border border-gray-200 dark:border-gray-700">
+                            <button onclick="switchLanguage('en')" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2">
+                                <span>🇺🇸</span> <span data-lang="lang_en">English</span>
+                            </button>
+                            <button onclick="switchLanguage('bn')" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2">
+                                <span>🇧🇩</span> <span data-lang="lang_bn">বাংলা</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Dark Mode Toggle -->
+                    <button id="dark-mode-toggle" aria-label="Toggle dark mode" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                        <svg id="sun-icon" class="w-5 h-5 text-gray-700 dark:text-gray-300 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                        </svg>
+                        <svg id="moon-icon" class="w-5 h-5 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                        </svg>
+                    </button>
+
+                    <!-- Auth Buttons -->
+                    <a href="login.html" data-lang="nav_login" class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2 rounded-full transition-all duration-300 transform hover:scale-105 font-medium">Login</a>
+                    <a href="register.html" data-lang="nav_register" class="border-2 border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white px-6 py-2 rounded-full transition-all duration-300 font-medium">Register</a>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <button id="mobile-menu-button" aria-label="Open menu" aria-expanded="false" class="md:hidden p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    <svg class="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="md:hidden hidden pb-4">
+                <div class="flex flex-col space-y-3">
+                    <a href="index.html" data-lang="nav_home" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">Home</a>
+                    <a href="about.html" data-lang="nav_about" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">About</a>
+                    <a href="donor.html" data-lang="nav_donors" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">Donors</a>
+                    <a href="donate.html" data-lang="nav_donate" class="text-primary-600 dark:text-primary-400 font-medium px-4 py-2 rounded-lg bg-red-50 dark:bg-gray-800">Donate</a>
+                    <a href="request.html" data-lang="nav_request" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">Request Blood</a>
+                    <a href="contact.html" data-lang="nav_contact" class="text-gray-700 dark:text-gray-300 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">Contact</a>
+
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-3">
+                        <p class="px-4 text-xs text-gray-500 dark:text-gray-400 mb-2">Language / ভাষা</p>
+                        <button onclick="switchLanguage('en')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">🇺🇸 English</button>
+                        <button onclick="switchLanguage('bn')" class="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">🇧🇩 বাংলা</button>
+                    </div>
+
+                    <div class="border-t border-gray-200 dark:border-gray-700 pt-3">
+                        <a href="login.html" data-lang="nav_login" class="bg-primary-600 text-white px-4 py-2 rounded-lg text-center block">Login</a>
+                        <a href="register.html" data-lang="nav_register" class="border-2 border-primary-600 text-primary-600 dark:text-primary-400 px-4 py-2 rounded-lg text-center block mt-2">Register</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            <!-- Page Header -->
+            <div class="text-center mb-10 animate-slide-up">
+                <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-3">
+                    <span data-lang="donate_title">Donate</span>
+                    <span class="text-primary-600 dark:text-primary-400" data-lang="donate_highlight">Blood</span>
+                </h1>
+                <p class="text-lg text-gray-600 dark:text-gray-400" data-lang="donate_subtitle">
+                    Schedule your blood donation appointment and save lives
+                </p>
+            </div>
+
+            <!-- Emergency Info Banner -->
+            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 mb-8 animate-slide-up">
+                <div class="flex items-start space-x-3">
+                    <svg class="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    <div>
+                        <h3 class="font-semibold text-gray-900 dark:text-white" data-lang="donate_emergency_title">🩸 Emergency Donation Needed</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400" data-lang="donate_emergency_text">
+                            O-Negative blood urgently needed at City Hospital. Please donate if you're eligible.
+                        </p>
+                        <button id="emergency-donate-btn" class="mt-2 text-sm text-primary-600 hover:text-primary-700 font-medium" data-lang="donate_emergency_btn">
+                            I can donate → 
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 text-center shadow-sm animate-slide-up">
+                    <div class="text-2xl font-bold text-primary-600 dark:text-primary-400" id="total-donations">12,847</div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400" data-lang="donate_stats_donations">Total Donations</p>
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 text-center shadow-sm animate-slide-up" style="animation-delay: 0.1s;">
+                    <div class="text-2xl font-bold text-primary-600 dark:text-primary-400" id="active-centers">156</div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400" data-lang="donate_stats_centers">Active Centers</p>
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 text-center shadow-sm animate-slide-up" style="animation-delay: 0.2s;">
+                    <div class="text-2xl font-bold text-primary-600 dark:text-primary-400" id="today-donors">89</div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400" data-lang="donate_stats_today">Donated Today</p>
+                </div>
+                <div class="bg-white dark:bg-gray-800 rounded-xl p-4 text-center shadow-sm animate-slide-up" style="animation-delay: 0.3s;">
+                    <div class="text-2xl font-bold text-primary-600 dark:text-primary-400" id="next-eligible">5 days</div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400" data-lang="donate_stats_eligible">Until Eligible</p>
+                </div>
+            </div>
+
+            <!-- Main Donation Flow -->
+            <div class="grid lg:grid-cols-3 gap-8">
+
+                <!-- Left Column: Steps & Eligibility -->
+                <div class="lg:col-span-1">
+                    <!-- Donation Steps -->
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-6">
+                        <h2 class="text-lg font-bold text-gray-900 dark:text-white mb-4" data-lang="donate_steps_title">How It Works</h2>
+                        <div class="space-y-4">
+                            <div class="flex items-start space-x-3">
+                                <div class="flex-shrink-0 w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                                <div>
+                                    <p class="font-medium text-gray-900 dark:text-white" data-lang="donate_step1_title">Check Eligibility</p>
+                                    <p class="text-sm text-gray-500" data-lang="donate_step1_desc">Verify you meet donation requirements</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-3">
+                                <div class="flex-shrink-0 w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                                <div>
+                                    <p class="font-medium text-gray-900 dark:text-white" data-lang="donate_step2_title">Find a Center</p>
+                                    <p class="text-sm text-gray-500" data-lang="donate_step2_desc">Choose a nearby donation center</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-3">
+                                <div class="flex-shrink-0 w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                                <div>
+                                    <p class="font-medium text-gray-900 dark:text-white" data-lang="donate_step3_title">Schedule Appointment</p>
+                                    <p class="text-sm text-gray-500" data-lang="donate_step3_desc">Pick a date and time that works for you</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start space-x-3">
+                                <div class="flex-shrink-0 w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center text-sm font-bold">4</div>
+                                <div>
+                                    <p class="font-medium text-gray-900 dark:text-white" data-lang="donate_step4_title">Donate & Save Lives</p>
+                                    <p class="text-sm text-gray-500" data-lang="donate_step4_desc">Visit the center and make a difference</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Eligibility Checker -->
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                        <div class="mb-4 flex items-start justify-between gap-3">
+                            <div>
+                                <h2 class="text-lg font-bold text-gray-900 dark:text-white" data-lang="donate_eligibility_title">✅ Eligibility Check</h2>
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">A quick self-screening guide — the donation center makes the final decision.</p>
+                            </div>
+                            <span id="eligibility-count" class="shrink-0 rounded-full bg-primary-50 px-2.5 py-1 text-xs font-semibold text-primary-700 dark:bg-primary-900/40 dark:text-primary-300">0 of 6</span>
+                        </div>
+                        <div class="space-y-4" id="eligibility-list">
+                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <label class="block">
+                                    <span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Age</span>
+                                    <input id="eligibility-age" type="number" min="18" max="65" inputmode="numeric" placeholder="18–65" class="eligibility-number w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:ring-primary-900">
+                                </label>
+                                <label class="block">
+                                    <span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Weight (kg)</span>
+                                    <input id="eligibility-weight" type="number" min="50" inputmode="decimal" placeholder="Minimum 50 kg" class="eligibility-number w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:ring-primary-900">
+                                </label>
+                            </div>
+
+                            <label class="block">
+                                <span class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Gender</span>
+                                <select id="eligibility-gender" class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:focus:ring-primary-900">
+                                    <option value="">Select an option</option>
+                                    <option value="female">Woman</option>
+                                    <option value="male">Man</option>
+                                    <option value="self-describe">Self-describe / prefer not to say</option>
+                                </select>
+                            </label>
+
+                            <div id="pregnancy-screening" class="hidden rounded-xl border border-rose-200 bg-rose-50 p-3 dark:border-rose-900/60 dark:bg-rose-900/20">
+                                <label class="block">
+                                    <span class="block text-sm font-medium text-rose-900 dark:text-rose-200">Does pregnancy or breastfeeding currently apply to you?</span>
+                                    <span class="mt-1 block text-xs text-rose-700 dark:text-rose-300">Please select the option that best matches your situation.</span>
+                                    <select id="pregnancy-status" class="mt-2 w-full rounded-lg border border-rose-200 bg-white px-3 py-2.5 text-gray-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:border-rose-800 dark:bg-gray-700 dark:text-white dark:focus:ring-primary-900">
+                                        <option value="">Select an option</option>
+                                        <option value="no">No, it does not apply</option>
+                                        <option value="yes">Yes, I am pregnant, recently gave birth, or am breastfeeding</option>
+                                    </select>
+                                </label>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label class="eligibility-item flex items-start space-x-3 rounded-lg p-3 cursor-pointer">
+                                    <input type="checkbox" class="eligibility-check mt-1 rounded text-primary-600 focus:ring-primary-500">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">I feel well today and do not have a fever, cold, flu, stomach illness, or other active infection.</span>
+                                </label>
+                                <label class="eligibility-item flex items-start space-x-3 rounded-lg p-3 cursor-pointer">
+                                    <input type="checkbox" class="eligibility-check mt-1 rounded text-primary-600 focus:ring-primary-500">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">I have not had a tattoo or piercing in the last 6 months.</span>
+                                </label>
+                                <label class="eligibility-item flex items-start space-x-3 rounded-lg p-3 cursor-pointer">
+                                    <input type="checkbox" class="eligibility-check mt-1 rounded text-primary-600 focus:ring-primary-500">
+                                    <span class="text-sm text-gray-700 dark:text-gray-300">I understand that recent medicines, travel, medical conditions, and donation history will be reviewed by the center.</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div id="eligibility-result" class="rounded-xl bg-gray-100 p-4 transition-colors dark:bg-gray-700" aria-live="polite">
+                                <div class="flex justify-between text-sm">
+                                    <span class="font-medium text-gray-700 dark:text-gray-300" data-lang="donate_eligibility_progress">Eligibility Score</span>
+                                    <span id="eligibility-score" class="font-bold text-primary-600">0%</span>
+                                </div>
+                                <div class="mt-2 h-2 w-full rounded-full bg-gray-200 dark:bg-gray-600">
+                                    <div id="eligibility-bar" class="h-2 rounded-full bg-primary-600 progress-bar" style="width: 0%"></div>
+                                </div>
+                                <p id="eligibility-status" class="mt-3 text-sm font-semibold text-gray-700 dark:text-gray-200">Start by confirming each requirement.</p>
+                                <p id="eligibility-message" class="mt-1 text-xs text-gray-500 dark:text-gray-400" data-lang="donate_eligibility_hint">Check all that apply to see your eligibility</p>
+                            </div>
+                            <button id="check-eligibility-btn" class="mt-3 w-full rounded-lg bg-primary-600 py-2 font-medium text-white transition-colors hover:bg-primary-700" data-lang="donate_eligibility_check">
+                                Check My Eligibility
+                            </button>
+                            <button id="reset-eligibility-btn" type="button" class="mt-2 w-full rounded-lg py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">Reset answers</button>
+
+                            <div id="eligibility-form-preview" class="mt-4 hidden rounded-xl border border-primary-200 bg-primary-50 p-4 dark:border-primary-800 dark:bg-primary-900/20" aria-live="polite">
+                                <div class="flex items-start gap-3">
+                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-600 text-lg text-white">📝</div>
+                                    <div>
+                                        <h3 class="font-semibold text-gray-900 dark:text-white">Donor registration form</h3>
+                                        <p class="mt-1 text-sm text-gray-600 dark:text-gray-300">You passed the preliminary 80% eligibility check. The registration form is coming soon.</p>
+                                        <button type="button" disabled class="mt-3 cursor-not-allowed rounded-lg bg-gray-300 px-4 py-2 text-sm font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400">Coming soon</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center Column: Donation Centers -->
+                <div class="lg:col-span-2">
+                    <!-- Center Search & Filter -->
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-6">
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <div class="flex-1">
+                                <div class="relative">
+                                    <svg class="absolute left-3 top-3 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                    </svg>
+                                    <input type="text" id="center-search" placeholder="Search by name, location..." class="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <select id="center-filter" class="px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+                                    <option value="all" data-lang="donate_center_filter_all">All Centers</option>
+                                    <option value="hospital" data-lang="donate_center_filter_hospital">Hospitals</option>
+                                    <option value="clinic" data-lang="donate_center_filter_clinic">Clinics</option>
+                                    <option value="blood-bank" data-lang="donate_center_filter_bank">Blood Banks</option>
+                                    <option value="mobile" data-lang="donate_center_filter_mobile">Mobile Units</option>
+                                </select>
+                                <select id="center-blood-filter" aria-label="Filter centers by blood group" class="px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500">
+                                    <option value="">All blood groups</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                </select>
+                                <button id="toggle-map" class="px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors" aria-label="Toggle map view">
+                                    <svg class="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex flex-wrap items-center gap-2">
+                            <span class="mr-1 text-sm font-medium text-gray-500 dark:text-gray-400" data-lang="donate_center_quick">Quick:</span>
+                            <button type="button" aria-pressed="false" class="center-quick-btn inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:-translate-y-0.5 hover:border-primary-400 hover:bg-primary-50 hover:text-primary-700 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-300 dark:hover:border-primary-600 dark:hover:bg-primary-900/30 dark:hover:text-primary-300" data-type="hospital">🏥 Hospitals</button>
+                            <button type="button" aria-pressed="false" class="center-quick-btn inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:-translate-y-0.5 hover:border-primary-400 hover:bg-primary-50 hover:text-primary-700 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-300 dark:hover:border-primary-600 dark:hover:bg-primary-900/30 dark:hover:text-primary-300" data-type="clinic">🏪 Clinics</button>
+                            <button type="button" aria-pressed="false" class="center-quick-btn inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:-translate-y-0.5 hover:border-primary-400 hover:bg-primary-50 hover:text-primary-700 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-300 dark:hover:border-primary-600 dark:hover:bg-primary-900/30 dark:hover:text-primary-300" data-type="blood-bank">🩸 Blood Banks</button>
+                            <button type="button" aria-pressed="false" class="center-quick-btn inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:-translate-y-0.5 hover:border-primary-400 hover:bg-primary-50 hover:text-primary-700 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-300 dark:hover:border-primary-600 dark:hover:bg-primary-900/30 dark:hover:text-primary-300" data-type="mobile">🚐 Mobile Units</button>
+                        </div>
+                    </div>
+
+                    <!-- Centers Grid -->
+                    <div id="centers-grid" class="grid sm:grid-cols-2 gap-4 mb-6">
+                        <!-- Centers will be rendered here -->
+                    </div>
+
+                    <!-- Appointment Booking -->
+                    <div id="booking-section" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hidden">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-gray-900 dark:text-white" data-lang="donate_booking_title">📅 Schedule Appointment</h3>
+                            <button id="close-booking" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <!-- Calendar -->
+                            <div>
+                                <div class="flex justify-between items-center mb-4">
+                                    <button id="prev-month" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                                        </svg>
+                                    </button>
+                                    <span id="current-month" class="font-medium text-gray-900 dark:text-white">January 2024</span>
+                                    <button id="next-month" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="grid grid-cols-7 gap-1 text-center mb-2">
+                                    <div class="text-xs font-medium text-gray-500">Sun</div>
+                                    <div class="text-xs font-medium text-gray-500">Mon</div>
+                                    <div class="text-xs font-medium text-gray-500">Tue</div>
+                                    <div class="text-xs font-medium text-gray-500">Wed</div>
+                                    <div class="text-xs font-medium text-gray-500">Thu</div>
+                                    <div class="text-xs font-medium text-gray-500">Fri</div>
+                                    <div class="text-xs font-medium text-gray-500">Sat</div>
+                                </div>
+                                <div id="calendar-days" class="grid grid-cols-7 gap-1">
+                                    <!-- Calendar days rendered here -->
+                                </div>
+                            </div>
+                            <!-- Time Slots -->
+                            <div>
+                                <h4 class="font-medium text-gray-900 dark:text-white mb-3" data-lang="donate_booking_time">Available Time Slots</h4>
+                                <div id="time-slots" class="grid grid-cols-3 gap-2">
+                                    <!-- Time slots rendered here -->
+                                </div>
+                                <div class="mt-4">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" data-lang="donate_booking_notes">Additional Notes</label>
+                                    <textarea id="booking-notes" rows="3" placeholder="Any special requests or information..." class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 resize-none"></textarea>
+                                </div>
+                                <button id="confirm-booking" class="w-full mt-4 bg-primary-600 hover:bg-primary-700 text-white py-3 rounded-lg font-semibold transition-colors" data-lang="donate_booking_confirm">
+                                    Confirm Appointment
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Donation History -->
+                    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mt-6">
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4" data-lang="donate_history_title">📊 Your Donation History</h3>
+                        <div id="donation-history" class="space-y-3">
+                            <!-- History items rendered here -->
+                            <div class="text-center py-8 text-gray-500" data-lang="donate_history_empty">
+                                No donation history yet. Schedule your first donation today!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-12 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <div class="flex items-center space-x-2 mb-4">
+                        <svg class="w-8 h-8 text-primary-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93z"/>
+                        </svg>
+                        <span class="text-xl font-bold">BloodDonate</span>
+                    </div>
+                    <p data-lang="footer_desc" class="text-gray-400 text-sm">Saving lives through blood donation since 2020. Your donation matters.</p>
+                </div>
+                <div>
+                    <h4 data-lang="footer_quick" class="text-lg font-semibold mb-4">Quick Links</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="about.html" data-lang="footer_about" class="hover:text-primary-400 transition-colors">About Us</a></li>
+                        <li><a href="donor.html" data-lang="footer_find" class="hover:text-primary-400 transition-colors">Find Donors</a></li>
+                        <li><a href="donate.html" class="hover:text-primary-400 transition-colors">Donate Blood</a></li>
+                        <li><a href="request.html" data-lang="nav_request" class="hover:text-primary-400 transition-colors">Request Blood</a></li>
+                        <li><a href="contact.html" data-lang="footer_contact" class="hover:text-primary-400 transition-colors">Contact</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 data-lang="footer_info" class="text-lg font-semibold mb-4">Contact Info</h4>
+                    <ul class="space-y-2 text-gray-400 text-sm">
+                        <li>📞 +1 (555) 123-4567</li>
+                        <li>📧 info@blooddonate.com</li>
+                        <li>📍 123 Health Street, Medical City</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 data-lang="footer_follow" class="text-lg font-semibold mb-4">Follow Us</h4>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-primary-400 transition-colors" aria-label="Facebook">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-primary-400 transition-colors" aria-label="Twitter">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                            </svg>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-primary-400 transition-colors" aria-label="Instagram">
+                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678c-3.405 0-6.162 2.76-6.162 6.162 0 3.405 2.76 6.162 6.162 6.162 3.405 0 6.162-2.76 6.162-6.162 0-3.405-2.76-6.162-6.162-6.162zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405c0 .795-.646 1.44-1.44 1.44-.795 0-1.44-.646-1.44-1.44 0-.794.646-1.439 1.44-1.439.793-.001 1.44.645 1.44 1.439z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 pt-8 text-center text-gray-400 text-sm">
+                <p data-lang="footer_rights">© 2024 BloodDonate. All rights reserved. Made with ❤️ for humanity.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript Files -->
+    <script src="js/darkmode.js"></script>
+    <script src="js/language.js"></script>
+    <script src="js/donate.js"></script>
+</body>
+</html>

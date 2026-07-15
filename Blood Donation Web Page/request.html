@@ -242,6 +242,11 @@
               >Donors</a
             >
             <a
+              href="donate.html"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium"
+              >Donate</a
+            >
+            <a
               href="request.html"
               class="text-primary-600 dark:text-primary-400 font-medium"
               aria-current="page"
@@ -342,6 +347,11 @@
               >Donors</a
             >
             <a
+              href="donate.html"
+              class="text-gray-700 dark:text-gray-300 hover:text-primary-600 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >Donate</a
+            >
+            <a
               href="request.html"
               class="text-primary-600 dark:text-primary-400 font-medium px-4 py-2 rounded-lg bg-red-50 dark:bg-gray-800"
               >Request Blood</a
@@ -411,14 +421,21 @@
             <h1
               class="text-4xl sm:text-5xl font-bold text-gray-900 dark:text-white mb-4"
             >
-              Request
-              <span class="text-primary-600 dark:text-primary-400">Blood</span>
+              <span data-lang="nav_request">Request</span>
+              <span
+                class="text-primary-600 dark:text-primary-400"
+                data-lang="nav_request"
+                >Blood</span
+              >
             </h1>
 
             <!-- Subtitle -->
             <p class="text-xl text-gray-600 dark:text-gray-400 mb-8">
-              Our blood request feature is coming soon! We're building something
-              amazing to help you find blood donors quickly and efficiently.
+              <span data-lang="request_intro"
+                >Our blood request feature is coming soon! We're building
+                something amazing to help you find blood donors quickly and
+                efficiently.</span
+              >
             </p>
 
             <!-- Features Preview -->
@@ -437,7 +454,10 @@
                     d="M13 10V3L4 14h7v7l9-11h-7z"
                   ></path>
                 </svg>
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <p
+                  class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                  data-lang="request_alerts"
+                >
                   Instant Alerts
                 </p>
               </div>
@@ -461,7 +481,10 @@
                     d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                   ></path>
                 </svg>
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <p
+                  class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                  data-lang="request_nearby"
+                >
                   Nearby Donors
                 </p>
               </div>
@@ -479,7 +502,10 @@
                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                   ></path>
                 </svg>
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                <p
+                  class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                  data-lang="request_fast"
+                >
                   Fast Response
                 </p>
               </div>
@@ -488,7 +514,7 @@
             <!-- Countdown Timer -->
             <div class="mb-8">
               <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                Expected Launch In
+                <span data-lang="request_launch">Expected Launch In</span>
               </p>
               <div class="flex justify-center space-x-4 sm:space-x-6">
                 <div class="countdown-item text-center">
@@ -553,7 +579,9 @@
             <!-- Notification Signup -->
             <div class="max-w-md mx-auto">
               <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                Want to be notified when this feature launches?
+                <span data-lang="request_notify"
+                  >Want to be notified when this feature launches?</span
+                >
               </p>
               <form id="notify-form" class="flex gap-2">
                 <input
@@ -566,7 +594,7 @@
                   type="submit"
                   class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 whitespace-nowrap"
                 >
-                  Notify Me
+                  <span data-lang="request_notify_btn">Notify Me</span>
                 </button>
               </form>
               <p id="notify-message" class="text-sm text-green-500 mt-2 hidden">
@@ -580,7 +608,7 @@
             class="bg-gray-50 dark:bg-gray-900 px-8 py-4 border-t border-gray-200 dark:border-gray-700"
           >
             <p class="text-sm text-gray-600 dark:text-gray-400">
-              In the meantime, you can
+              <span data-lang="request_cta">In the meantime, you can</span>
               <a
                 href="donor.html"
                 class="text-primary-600 hover:text-primary-500 font-medium"
@@ -610,6 +638,8 @@
 
     <!-- JavaScript Files -->
     <script src="js/darkmode.js"></script>
+    <script src="js/language.js"></script>
+    <script src="js/app.js"></script>
     <script>
       // Request Page JavaScript
       document.addEventListener("DOMContentLoaded", function () {

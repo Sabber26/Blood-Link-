@@ -8,6 +8,7 @@ const Language = {
       nav_home: "Home",
       nav_about: "About",
       nav_donors: "Donors",
+      nav_donate: "Donate",
       nav_request: "Request Blood",
       nav_contact: "Contact",
       nav_login: "Login",
@@ -116,6 +117,30 @@ const Language = {
       footer_rights:
         "© 2024 BloodDonate. All rights reserved. Made with ❤️ for humanity.",
 
+      // Request / Contact pages
+      request_intro:
+        "Our blood request feature is coming soon! We're building something amazing to help you find blood donors quickly and efficiently.",
+      request_alerts: "Instant Alerts",
+      request_nearby: "Nearby Donors",
+      request_fast: "Fast Response",
+      request_launch: "Expected Launch In",
+      request_notify: "Want to be notified when this feature launches?",
+      request_notify_btn: "Notify Me",
+      request_cta: "In the meantime, you can",
+      request_browse: "browse available donors",
+      request_contact: "contact us",
+      contact_intro:
+        "Our contact page is under construction. In the meantime, here's how you can reach us.",
+      contact_email_title: "Email Us",
+      contact_call_title: "Call Us",
+      contact_visit_title: "Visit Us",
+      contact_social_title: "Connect With Us",
+      contact_quick_title: "Quick Message",
+      contact_quick_desc: "We'll get back to you within 24 hours",
+      contact_send: "Send Message",
+      contact_footer:
+        "Our full contact page with live chat, FAQ, and support ticket system is coming soon!",
+
       // Language Switcher
       lang_en: "English",
       lang_bn: "বাংলা",
@@ -139,6 +164,8 @@ const Language = {
       back_to_top: "Back to top",
       dark_mode: "Toggle dark mode",
       menu_open: "Open menu",
+      emergency_banner: "Emergency blood alert",
+      footer_text: "Saving lives through blood donation since 2020.",
     },
 
     bn: {
@@ -146,6 +173,7 @@ const Language = {
       nav_home: "হোম",
       nav_about: "সম্পর্কে",
       nav_donors: "রক্তদাতা",
+      nav_donate: "রক্তদান",
       nav_request: "রক্তের অনুরোধ",
       nav_contact: "যোগাযোগ",
       nav_login: "লগইন",
@@ -278,6 +306,8 @@ const Language = {
       back_to_top: "উপরে ফিরে যান",
       dark_mode: "ডার্ক মোড টগল করুন",
       menu_open: "মেনু খুলুন",
+      emergency_banner: "জরুরি রক্তের সতর্কতা",
+      footer_text: "২০২০ সাল থেকে রক্তদানের মাধ্যমে জীবন বাঁচানো।",
     },
   },
 
